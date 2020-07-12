@@ -18,11 +18,15 @@ async function* fileLinesGen(filepath, userOptions) {
     const options = normalizeOptions(userOptions);
     const file = await open(filepath, options);
     try {
-        let input, result;
+        let enough = false;
         do {
-            result = await read(file);
-            input = yield result.lines;
-        } while (result.done !== true && input !== false);
+            const { done, lines } = await read(file);
+            if (done) {
+                if (lines.length > 0) yield lines;
+                break;
+            }
+            enough = yield lines;
+        } while (enough !== true);
     } finally {
         await close(file);
     }
@@ -63,23 +67,27 @@ async function open(filepath, options) {
 async function read(file) {
     const { promise, resolve, reject } = defer();
     const { fd, buffer, offset, encoding } = file;
-    const lines = [];
-    let done = false;
     fs.read(fd, buffer, offset, buffer.length - offset, null, function (error, bytesRead) {
+        let done = false, lines = [];
         if (error) {
             reject(error);
             return;
         }
         if (bytesRead > 0) {
-            file.offset = bufferToLines(buffer, offset + bytesRead, encoding, lines);
+            const size = offset + bytesRead;
+            file.offset = bufferToLines(buffer, size, encoding, lines);
+            if (file.offset === size) {
+                file.offset = 0;
+                lines.push(buffer.toString(encoding, 0, size));
+            }
         } else {
-            file.offset = 0;
             done = true;
             if (offset > 0) {
+                file.offset = 0;
                 lines.push(buffer.toString(encoding, 0, offset));
             }
         }
-        resolve(Object.freeze({ lines, done }));
+        resolve(Object.freeze({ done, lines }));
     });
     return await promise;
 }
