@@ -1,0 +1,35 @@
+{
+  "name": "file-lines-gen",
+  "version": "1.0.0",
+  "description": "Async Generator for File Lines ;-)",
+  "main": "file-lines-gen.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emfol/file-lines-gen.git"
+  },
+  "keywords": [
+    "file",
+    "lines",
+    "async",
+    "generator",
+    "efficient",
+    "small"
+  ],
+  "author": "Emanuel F. Oliveira",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/emfol/file-lines-gen/issues"
+  },
+  "homepage": "https://github.com/emfol/file-lines-gen#readme",
+  "devDependencies": {
+    "eslint": "^7.4.0",
+    "eslint-plugin-jest": "^23.18.0",
+    "jest": "^26.1.0"
+  },
+  "dependencies": {
+    "buffer-to-lines": "1.0.2"
+  }
+}
