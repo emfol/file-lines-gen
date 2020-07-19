@@ -18,15 +18,20 @@ async function* fileLinesGen(filepath, userOptions) {
     const options = normalizeOptions(userOptions);
     const file = await open(filepath, options);
     try {
-        let enough = false;
+        let more = true;
         do {
-            const { done, lines } = await read(file);
-            if (done) {
-                if (lines.length > 0) yield lines;
-                break;
+            const result = await read(file);
+            if (typeof result !== 'object' || result === null || !Array.isArray(result.lines)) {
+                throw new Error('Unexpected result from "read" call.');
             }
-            enough = yield lines;
-        } while (enough !== true);
+            if (result.lines.length > 0) {
+                const enough = yield result.lines;
+                if (enough === true) {
+                    break;
+                }
+            }
+            more = result.done === false;
+        } while (more);
     } finally {
         await close(file);
     }
@@ -77,6 +82,7 @@ async function read(file) {
             const size = offset + bytesRead;
             file.offset = bufferToLines(buffer, size, encoding, lines);
             if (file.offset === size) {
+                // buffer is full and no EOL was found
                 file.offset = 0;
                 lines.push(buffer.toString(encoding, 0, size));
             }
