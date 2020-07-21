@@ -18,20 +18,15 @@ async function* fileLinesGen(filepath, userOptions) {
     const options = normalizeOptions(userOptions);
     const file = await open(filepath, options);
     try {
-        let more = true;
+        let result;
         do {
-            const result = await read(file);
-            if (typeof result !== 'object' || result === null || !Array.isArray(result.lines)) {
-                throw new Error('Unexpected result from "read" call.');
-            }
+            result = await read(file);
+            if (!isValidReadResult(result)) throw new Error('Failed reading data...');
             if (result.lines.length > 0) {
                 const enough = yield result.lines;
-                if (enough === true) {
-                    break;
-                }
+                if (enough === true) break;
             }
-            more = result.done === false;
-        } while (more);
+        } while (result.done === false);
     } finally {
         await close(file);
     }
@@ -40,6 +35,10 @@ async function* fileLinesGen(filepath, userOptions) {
 /**
  * Helpers
  */
+
+function isValidReadResult(subject) {
+    return typeof subject === 'object' && subject !== null && Array.isArray(subject.lines);
+}
 
 function normalizeOptions(userOptions) {
     const options = Object(userOptions);
